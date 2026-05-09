@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getLogsByUser } from '../db/database';
+import { getLogsByUser, getActivePlan } from '../db/database';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -22,13 +22,19 @@ function getWeekLabel(date) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
+  const [activePlan, setActivePlan] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    getLogsByUser(user.userID).then((data) => {
-      setLogs(data);
+    Promise.all([
+      getLogsByUser(user.userID),
+      getActivePlan(user.userID),
+    ]).then(([logData, plan]) => {
+      setLogs(logData);
+      setActivePlan(plan || null);
       setLoading(false);
     });
   }, [user]);
@@ -56,13 +62,12 @@ export default function Dashboard() {
     return weeks;
   })();
 
-  const totalSessions = new Set(logs.map((l) => `${l.date}-${l.userID}`)).size;
+  const totalSessions = new Set(logs.map((l) => `${l.date}`)).size;
   const totalSets = logs.length;
-  const recentDays = 7;
   const recentLogs = logs.filter((l) => {
     const d = new Date(l.date);
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - recentDays);
+    cutoff.setDate(cutoff.getDate() - 7);
     return d >= cutoff;
   });
   const thisWeekSessions = new Set(recentLogs.map((l) => new Date(l.date).toDateString())).size;
@@ -73,7 +78,7 @@ export default function Dashboard() {
       {
         data: weeklyData.map((w) => w.count),
         backgroundColor: weeklyData.map((w) =>
-          w.count > 0 ? 'rgba(245,158,11,0.8)' : 'rgba(51,65,85,0.6)'
+          w.count > 0 ? 'rgba(172,133,94,0.85)' : 'rgba(109,115,97,0.4)'
         ),
         borderRadius: 6,
       },
@@ -83,15 +88,29 @@ export default function Dashboard() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.raw} session${c.raw !== 1 ? 's' : ''}` } } },
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: (c) => `${c.raw} session${c.raw !== 1 ? 's' : ''}` } },
+    },
     scales: {
-      x: { ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
-      y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(51,65,85,0.5)' }, beginAtZero: true },
+      x: { ticks: { color: '#C0C7AB', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+      y: { ticks: { color: '#C0C7AB', stepSize: 1 }, grid: { color: 'rgba(152,159,126,0.2)' }, beginAtZero: true },
     },
   };
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Next day info for active plan
+  const nextDay = activePlan ? activePlan.days[activePlan.currentDayIndex] : null;
+
+  function continuePlan() {
+    if (!nextDay) return;
+    sessionStorage.setItem('liftlog_active_plan', JSON.stringify(nextDay.exercises));
+    sessionStorage.setItem('liftlog_active_label', nextDay.dayLabel);
+    sessionStorage.setItem('liftlog_completing_day_index', String(activePlan.currentDayIndex));
+    navigate('/workout');
+  }
 
   return (
     <div className="page">
@@ -99,6 +118,35 @@ export default function Dashboard() {
         <h1 className="dashboard-greeting">{greeting}, {user?.username} 💪</h1>
         <p className="text-muted">Ready to crush it today?</p>
       </div>
+
+      {/* Continue Plan card */}
+      {activePlan && nextDay && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, var(--surface), var(--card))',
+            border: '1.5px solid var(--accent)',
+            borderRadius: 'var(--radius)',
+            padding: '16px',
+            marginBottom: '16px',
+          }}
+        >
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-light)', marginBottom: 4 }}>
+            Active Plan · {activePlan.splitName}
+          </div>
+          <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 2 }}>{nextDay.dayLabel}</div>
+          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 12 }}>
+            {nextDay.exercises.length} exercises · {activePlan.completedDates.length} days completed
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={continuePlan}>
+              Continue ▶
+            </button>
+            <Link to="/plan" className="btn btn-secondary" style={{ flex: 1, textAlign: 'center' }}>
+              Change Plan
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="stat-grid">
         <div className="stat-card">
@@ -152,7 +200,7 @@ export default function Dashboard() {
 
       {logs.length === 0 && !loading && (
         <div className="alert alert-info mt-3">
-          👋 No workouts yet! Tap <strong>New Workout</strong> to get started.
+          👋 No workouts yet — tap <strong>New Workout</strong> to get started.
         </div>
       )}
     </div>

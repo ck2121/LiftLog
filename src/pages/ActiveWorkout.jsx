@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { addLog } from '../db/database';
+import { addLog, advanceActivePlan } from '../db/database';
 
 export default function ActiveWorkout() {
   const { user } = useAuth();
@@ -88,9 +88,16 @@ export default function ActiveWorkout() {
 
   async function finishWorkout() {
     setSaving(true);
-    // All sets are already logged individually; just clear session
+
+    // If this was a split plan day, advance the active plan to the next day
+    const completingDayIndex = sessionStorage.getItem('liftlog_completing_day_index');
+    if (completingDayIndex !== null && user) {
+      await advanceActivePlan(user.userID, parseInt(completingDayIndex, 10));
+    }
+
     sessionStorage.removeItem('liftlog_active_plan');
     sessionStorage.removeItem('liftlog_active_label');
+    sessionStorage.removeItem('liftlog_completing_day_index');
     setSaving(false);
     setDone(true);
   }

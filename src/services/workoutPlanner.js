@@ -1,5 +1,29 @@
 import { EXERCISES } from '../data/exercises';
 
+// ── Progressive Overload ──────────────────────────────────────────────────────
+// For a given exercise, find the most recent logged weight and increase by 10%.
+// Rounds to the nearest 5 lbs. Falls back to defaultWeightLbs if no history.
+
+export function calcProgressiveWeight(exercise, allLogs) {
+  // Filter logs to this specific machine, sort most-recent first
+  const machineLogs = allLogs
+    .filter((l) => l.machineID === exercise.exerciseID)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (machineLogs.length === 0) return exercise.defaultWeightLbs;
+
+  // Max weight logged in the most recent session for this machine
+  const mostRecentDate = machineLogs[0].date;
+  const sessionLogs = machineLogs.filter((l) => l.date === mostRecentDate);
+  const lastMax = Math.max(...sessionLogs.map((l) => l.weightLbs));
+
+  if (!lastMax || lastMax <= 0) return exercise.defaultWeightLbs;
+
+  // +10%, rounded to nearest 5 lbs (minimum 5 lbs)
+  const increased = lastMax * 1.1;
+  return Math.max(5, Math.round(increased / 5) * 5);
+}
+
 // How many exercises to recommend based on duration
 const DURATION_TO_EXERCISE_COUNT = {
   30: 4,
@@ -86,9 +110,10 @@ function balanceMuscleGroups(exercises, count, bodyArea) {
  * @param {number} options.durationMinutes - workout duration in minutes
  * @param {string} options.bodyArea - 'Upper Body' | 'Lower Body' | 'Full Body' | 'Core'
  * @param {Array}  options.recentLogs - recent workout log entries (to avoid repeats)
+ * @param {Array}  options.allLogs - all workout logs (for progressive weight calc)
  * @returns {Array} array of exercise objects with sets/reps/weight
  */
-export function generateSingleDayPlan({ durationMinutes, bodyArea, recentLogs = [] }) {
+export function generateSingleDayPlan({ durationMinutes, bodyArea, recentLogs = [], allLogs = [] }) {
   const count = getExerciseCount(durationMinutes);
   let pool = filterByBodyArea(EXERCISES, bodyArea);
   pool = deWeightRecent(pool, recentLogs);
@@ -98,7 +123,7 @@ export function generateSingleDayPlan({ durationMinutes, bodyArea, recentLogs = 
     ...ex,
     plannedSets: ex.defaultSets,
     plannedReps: ex.defaultReps,
-    plannedWeightLbs: ex.defaultWeightLbs,
+    plannedWeightLbs: calcProgressiveWeight(ex, allLogs),
   }));
 }
 
@@ -130,7 +155,7 @@ export const SPLIT_TEMPLATES = {
 /**
  * Generate a multi-day split plan.
  */
-export function generateSplitPlan({ splitName, durationMinutes, recentLogs = [] }) {
+export function generateSplitPlan({ splitName, durationMinutes, recentLogs = [], allLogs = [] }) {
   const template = SPLIT_TEMPLATES[splitName];
   if (!template) return [];
 
@@ -150,7 +175,7 @@ export function generateSplitPlan({ splitName, durationMinutes, recentLogs = [] 
         ...ex,
         plannedSets: ex.defaultSets,
         plannedReps: ex.defaultReps,
-        plannedWeightLbs: ex.defaultWeightLbs,
+        plannedWeightLbs: calcProgressiveWeight(ex, allLogs),
       })),
     };
   });

@@ -1,5 +1,5 @@
 # LiftLog — Product Requirements Document
-**Version:** 2.0  
+**Version:** 2.1  
 **Status:** Draft  
 **Date:** May 2026  
 **Author:** Product Team  
@@ -42,10 +42,10 @@ Casual and intermediate weightlifters often struggle to maintain consistent, pro
 LiftLog addresses these pain points by providing a guided, recommendation-driven PWA that:
 
 - Generates personalized workout plans based on available time and target body region.
-- Recommends specific gym machines and exercises with sets, reps, and weight guidance.
-- Supports multi-day rotating schedules (e.g., Push/Pull/Legs splits).
+- Recommends specific gym machines and exercises with sets, reps, and weight guidance — automatically increasing suggested weight by 10% each session based on the user's most recent logged weight for that machine.
+- Supports multi-day rotating schedules (e.g., Push/Pull/Legs splits) with persistent plan tracking — the app remembers which day was last completed and prompts the user to continue on the Dashboard.
 - Stores all data locally on the device in IndexedDB — no internet required after install.
-- Displays progress charts showing weight lifted per machine over time.
+- Displays progress charts showing weight lifted per machine over time, including a dedicated plan progress view.
 - Allows full data backup (JSON export/import) and progress export (CSV).
 - Protects user data with a simple password-based login that persists across sessions.
 
@@ -359,7 +359,31 @@ Priority scale: **P0** = Must Have | **P1** = Should Have | **P2** = Nice to Hav
 
 ## 10. Revision History
 
+### 5.8 Progressive Overload
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| PRG-01 | The app shall automatically calculate a recommended starting weight for each exercise by taking the user's most recently logged weight for that machine and increasing it by 10%. | P0 | Generated plan shows a weight 10% higher than the last logged weight for that machine, rounded to the nearest 5 lbs. |
+| PRG-02 | If the user has no prior logs for a machine, the app shall fall back to the machine's default starting weight. | P0 | New users and first-time machines show the default weight defined in the exercise library. |
+| PRG-03 | The progressive weight recommendation shall be applied per machine (not per muscle group), using the maximum weight logged in the most recent session for that specific machine. | P0 | Two machines in the same muscle group each receive independent weight recommendations based on their own history. |
+
+### 5.9 Split Plan Persistence & Continuity
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| SPL-01 | When a user starts a split plan workout and completes it, the app shall save the active plan and the index of the completed day to IndexedDB. | P0 | After finishing Day 1 of Push/Pull/Legs, the app records that Day 1 is done and Day 2 is next. |
+| SPL-02 | The Dashboard shall display a "Continue Plan" card when an active split plan exists, showing the plan name and the next day to complete. | P0 | Opening the app after completing Day 1 shows a card reading "Continue Push/Pull/Legs — Day 2: Pull." |
+| SPL-03 | Tapping "Continue Plan" on the Dashboard shall navigate directly to the Active Workout for the next day, with progressive weights pre-applied. | P0 | Tapping the card skips the planner and starts Day 2 immediately with recommended weights. |
+| SPL-04 | The Plan page shall display the currently active plan and which day is next, with a button to start that day or create a new plan instead. | P0 | Plan page shows active plan status; a "Start New Plan" button allows the user to abandon the current plan and generate a new one. |
+| SPL-05 | When a split plan cycles through all days, it shall automatically reset to Day 1 and continue. | P1 | After completing the final day of a 3-day split, the next session cycles back to Day 1. |
+| SPL-06 | The Progress page shall include a "Plan Progress" section showing the weight trend for each exercise in the active plan. | P1 | A dedicated section lists each exercise in the plan with a mini progress indicator. |
+
+---
+
+## 10. Revision History
+
 | Version | Date | Summary |
 |---------|------|---------|
 | 1.0 | May 2026 | Initial draft — Google Sheets as data store |
 | 2.0 | May 2026 | Revised — all storage moved to local IndexedDB; removed all Google Cloud dependencies; added JSON backup/restore and CSV export |
+| 2.1 | May 2026 | Added progressive overload (10% weight increase per session), split plan persistence and continuity, plan progress view on Progress page, iPhone 17 Pro/Max display optimization, and updated color palette |

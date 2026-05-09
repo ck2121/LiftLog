@@ -2,21 +2,24 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --card: #273549;
-  --border: #334155;
-  --accent: #f59e0b;
-  --accent-dark: #d97706;
-  --accent-light: #fde68a;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
-  --danger: #ef4444;
-  --success: #22c55e;
-  --info: #38bdf8;
-  --radius: 12px;
-  --radius-sm: 8px;
+  /* Earthy olive/brown palette */
+  --bg: #3a3d32;            /* very dark olive */
+  --surface: #6D7361;       /* dark sage */
+  --card: #7d8470;          /* medium sage */
+  --border: #989F7E;        /* lighter sage */
+  --accent: #AC855E;        /* warm brown — primary CTA */
+  --accent-dark: #8B6A48;   /* deeper brown */
+  --accent-light: #C4A882;  /* light brown */
+  --neutral: #B6AD90;       /* warm tan */
+  --text: #f5f0e6;          /* warm white */
+  --text-muted: #C0C7AB;    /* light sage — muted text */
+  --danger: #b85c4a;        /* muted red */
+  --success: #7a9e6b;       /* muted green */
+  --info: #7a9eb5;          /* muted blue */
+  --radius: 14px;
+  --radius-sm: 9px;
   --nav-height: 68px;
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -26,20 +29,27 @@ html, body, #root {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  /* Prevent overscroll bounce showing bg color on iPhone */
+  overscroll-behavior: none;
 }
 
 /* ── App Shell ────────────────────────────────────────────────── */
 .app-container {
-  max-width: 480px;
+  /* Supports iPhone 17 Pro Max (430pt) and Pro (393pt) */
+  max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height — accounts for Safari toolbar */
   position: relative;
+  background: var(--bg);
 }
 
 .page {
-  padding: 20px 16px;
-  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
+  /* Top padding accounts for Dynamic Island / status bar on iPhone 17 */
+  padding: calc(var(--safe-top) + 20px) 18px 0;
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 20px);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .page-header {
@@ -234,11 +244,11 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
   letter-spacing: 0.04em;
 }
 
-.badge-accent { background: rgba(245,158,11,0.2); color: var(--accent); }
-.badge-success { background: rgba(34,197,94,0.2); color: var(--success); }
-.badge-danger { background: rgba(239,68,68,0.2); color: var(--danger); }
-.badge-info { background: rgba(56,189,248,0.2); color: var(--info); }
-.badge-muted { background: var(--border); color: var(--text-muted); }
+.badge-accent { background: rgba(172,133,94,0.25); color: var(--accent-light); }
+.badge-success { background: rgba(122,158,107,0.25); color: var(--success); }
+.badge-danger { background: rgba(184,92,74,0.25); color: #d4856e; }
+.badge-info { background: rgba(122,158,181,0.25); color: var(--info); }
+.badge-muted { background: rgba(152,159,126,0.3); color: var(--text-muted); }
 
 /* ── Divider ─────────────────────────────────────────────────── */
 .divider {
@@ -397,7 +407,7 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
+  max-width: 430px;
   height: calc(var(--nav-height) + var(--safe-bottom));
   background: var(--surface);
   border-top: 1px solid var(--border);
@@ -405,6 +415,9 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
   align-items: flex-start;
   padding-top: 8px;
   z-index: 100;
+  /* Soften with backdrop blur on supported devices */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .nav-items {
@@ -440,11 +453,13 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
 /* ── Login Page ──────────────────────────────────────────────── */
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
+  /* Top safe area so logo clears the Dynamic Island */
+  padding: calc(var(--safe-top) + 24px) 20px calc(var(--safe-bottom) + 24px);
 }
 
 .login-logo {
