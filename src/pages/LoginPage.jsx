@@ -1,50 +1,97 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, register } from '../services/auth';
+import { login, register, checkRateLimit, validateUsername, passwordStrength } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
 
+function StrengthBar({ password }) {
+  if (!password) return null;
+  const { score, label, color } = passwordStrength(password);
+  return (
+    <div style={{ marginTop: 6 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 3 }}>
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1, height: 4, borderRadius: 2,
+              background: i < score ? color : 'var(--border)',
+              transition: 'background 0.2s',
+            }}
+          />
+        ))}
+      </div>
+      <span style={{ fontSize: '0.72rem', color }}>{label}</span>
+    </div>
+  );
+}
+
 export default function LoginPage() {
-  const [tab, setTab] = useState('login'); // 'login' | 'signup'
+  const [tab, setTab]         = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [confirm, setConfirm]   = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [lockoutMsg, setLockoutMsg] = useState('');
   const { setUser } = useAuth();
   const navigate = useNavigate();
+
+  // Poll lockout status so the UI updates when the timer expires
+  useEffect(() => {
+    const tick = () => {
+      const rate = checkRateLimit();
+      setLockoutMsg(rate.locked ? rate.message : '');
+    };
+    tick();
+    const id = setInterval(tick, 10_000);
+    return () => clearInterval(id);
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
+    // Recheck lockout on submit in case timer just expired
+    const rate = checkRateLimit();
+    if (rate.locked) { setLockoutMsg(rate.message); return; }
+
+    setLoading(true);
     try {
       if (tab === 'login') {
         const result = await login(username, password);
-        if (!result.success) {
-          setError('Invalid username or password.');
+        if (result.error === 'rate_limited') {
+          setLockoutMsg(result.message);
+        } else if (!result.success) {
+          const rate2 = checkRateLimit();
+          const hint = rate2.attemptsLeft > 0
+            ? ` (${rate2.attemptsLeft} attempt${rate2.attemptsLeft !== 1 ? 's' : ''} left)`
+            : '';
+          setError(`Invalid username or password.${hint}`);
         } else {
           setUser(result.user);
           navigate('/');
         }
       } else {
+        // Signup validation
+        const usernameErr = validateUsername(username);
+        if (usernameErr) { setError(usernameErr); setLoading(false); return; }
+
+        const strength = passwordStrength(password);
+        if (strength.score === 0) {
+          setError('Password must be at least 8 characters.');
+          setLoading(false); return;
+        }
         if (password !== confirm) {
           setError('Passwords do not match.');
-          setLoading(false);
-          return;
+          setLoading(false); return;
         }
-        if (password.length < 6) {
-          setError('Password must be at least 6 characters.');
-          setLoading(false);
-          return;
-        }
+
         const result = await register(username, password);
         if (!result.success) {
-          if (result.error === 'username_taken') {
-            setError('That username is already taken.');
-          } else {
-            setError('Please enter a username and password.');
-          }
+          if (result.error === 'username_taken')    setError('That username is already taken.');
+          else if (result.error === 'invalid_username') setError(result.message);
+          else if (result.error === 'weak_password') setError('Password must be at least 8 characters.');
+          else setError('Something went wrong. Please try again.');
         } else {
           setUser(result.user);
           navigate('/');
@@ -52,7 +99,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       setError('Something went wrong. Please try again.');
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
     } finally {
       setLoading(false);
     }
@@ -74,21 +121,17 @@ export default function LoginPage() {
 
       <div className="login-card">
         <div className="login-tabs">
-          <button
-            className={`login-tab${tab === 'login' ? ' active' : ''}`}
-            onClick={() => switchTab('login')}
-          >
-            Sign In
-          </button>
-          <button
-            className={`login-tab${tab === 'signup' ? ' active' : ''}`}
-            onClick={() => switchTab('signup')}
-          >
-            Sign Up
-          </button>
+          <button className={`login-tab${tab === 'login'  ? ' active' : ''}`} onClick={() => switchTab('login')}>Sign In</button>
+          <button className={`login-tab${tab === 'signup' ? ' active' : ''}`} onClick={() => switchTab('signup')}>Sign Up</button>
         </div>
 
-        <form onSubmit={handleSubmit} autoComplete="off">
+        {lockoutMsg && (
+          <div className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            🔒 {lockoutMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} autoComplete={tab === 'signup' ? 'off' : 'on'}>
           {error && <div className="alert alert-error">{error}</div>}
 
           <div className="form-group">
@@ -98,10 +141,13 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
+              placeholder="3–32 chars, letters/numbers/_/-"
               autoCapitalize="none"
               autoCorrect="off"
+              autoComplete="username"
+              maxLength={32}
               required
+              disabled={!!lockoutMsg}
             />
           </div>
 
@@ -112,9 +158,12 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder={tab === 'signup' ? 'At least 8 characters' : 'Enter password'}
+              autoComplete={tab === 'signup' ? 'new-password' : 'current-password'}
               required
+              disabled={!!lockoutMsg}
             />
+            {tab === 'signup' && <StrengthBar password={password} />}
           </div>
 
           {tab === 'signup' && (
@@ -126,12 +175,13 @@ export default function LoginPage() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Re-enter password"
+                autoComplete="new-password"
                 required
               />
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button type="submit" className="btn btn-primary" disabled={loading || !!lockoutMsg}>
             {loading ? 'Please wait…' : tab === 'login' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
@@ -147,7 +197,7 @@ export default function LoginPage() {
         </p>
 
         <p className="text-center text-muted mt-2" style={{ fontSize: '0.72rem' }}>
-          🔒 All data stays on your device. No accounts sent anywhere.
+          🔒 All data stays on your device. Nothing is sent anywhere.
         </p>
       </div>
     </div>

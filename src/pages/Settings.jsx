@@ -28,35 +28,69 @@ export default function Settings() {
     }
   }
 
+  function validateBackup(json) {
+    if (!json || typeof json !== 'object') return 'Not a valid JSON object.';
+    if (!Array.isArray(json.workoutLogs))  return 'Missing or invalid workoutLogs field.';
+    if (json.workoutLogs.length > 100_000) return 'Backup contains too many log entries (max 100,000).';
+
+    for (const log of json.workoutLogs) {
+      if (typeof log.machineID   !== 'string')             return 'Log entry has invalid machineID.';
+      if (typeof log.machineName !== 'string')             return 'Log entry has invalid machineName.';
+      if (typeof log.date        !== 'string')             return 'Log entry has invalid date.';
+      if (typeof log.weightLbs   !== 'number' || log.weightLbs   < 0 || log.weightLbs   > 2000) return 'Log entry has out-of-range weight.';
+      if (typeof log.reps        !== 'number' || log.reps        < 0 || log.reps        > 1000) return 'Log entry has out-of-range reps.';
+      if (typeof log.sets        !== 'number' || log.sets        < 0 || log.sets        > 100)  return 'Log entry has out-of-range sets.';
+    }
+
+    if (json.plans !== undefined && !Array.isArray(json.plans)) return 'Plans field is not an array.';
+    if (Array.isArray(json.plans) && json.plans.length > 10_000)  return 'Backup contains too many plans (max 10,000).';
+    return null; // valid
+  }
+
   async function handleImport(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Sanity-check file size before reading (max 50 MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setMsg({ type: 'error', text: 'File is too large (max 50 MB).' });
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+
     setImporting(true);
     setMsg(null);
 
     try {
       const text = await file.text();
-      const json = JSON.parse(text);
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        setMsg({ type: 'error', text: 'Could not parse file — make sure it is a valid LiftLog JSON backup.' });
+        setImporting(false);
+        return;
+      }
 
-      if (!json.workoutLogs || !Array.isArray(json.workoutLogs)) {
-        setMsg({ type: 'error', text: 'Invalid backup file format.' });
+      const validationError = validateBackup(json);
+      if (validationError) {
+        setMsg({ type: 'error', text: `Invalid backup: ${validationError}` });
         setImporting(false);
         return;
       }
 
       const confirmed = confirm(
-        `This will import ${json.workoutLogs.length} workout log(s) and ${json.plans?.length || 0} plan(s) into your account. Continue?`
+        `Import ${json.workoutLogs.length} workout log(s) and ${json.plans?.length || 0} plan(s) into your account?\n\nExisting records will be kept.`
       );
       if (!confirmed) { setImporting(false); return; }
 
       await importUserData(json, user.userID);
-      setMsg({ type: 'success', text: `Imported ${json.workoutLogs.length} logs successfully.` });
-    } catch (e) {
+      setMsg({ type: 'success', text: `Imported ${json.workoutLogs.length} log(s) successfully.` });
+    } catch (err) {
       setMsg({ type: 'error', text: 'Import failed. Make sure the file is a valid LiftLog backup.' });
-      console.error(e);
+      if (import.meta.env.DEV) console.error(err);
     } finally {
       setImporting(false);
-      // Reset file input
       if (fileRef.current) fileRef.current.value = '';
     }
   }

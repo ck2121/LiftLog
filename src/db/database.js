@@ -91,6 +91,11 @@ export async function getUser(userID) {
   return db.get('users', userID);
 }
 
+export async function updateUser(userData) {
+  const db = await getDB();
+  return db.put('users', userData);
+}
+
 // ── WorkoutLog helpers ────────────────────────────────────────────────────────
 
 export async function addLog(logData) {
