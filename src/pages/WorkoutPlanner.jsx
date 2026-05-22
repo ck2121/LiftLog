@@ -136,14 +136,14 @@ export default function WorkoutPlanner() {
       {activePlan && !showNewPlan && (
         <div
           style={{
-            background: 'linear-gradient(135deg, var(--surface), var(--card))',
+            background: 'var(--card)',
             border: '1.5px solid var(--accent)',
             borderRadius: 'var(--radius)',
-            padding: '16px',
+            padding: '18px',
             marginBottom: '20px',
           }}
         >
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-light)', marginBottom: 4 }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent)', marginBottom: 6 }}>
             Active Plan · {activePlan.splitName}
           </div>
           <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 2 }}>{nextDay?.dayLabel}</div>
@@ -167,7 +167,7 @@ export default function WorkoutPlanner() {
                     background: done
                       ? 'var(--accent)'
                       : isCurrent
-                      ? 'var(--neutral)'
+                      ? 'var(--text-muted)'
                       : 'var(--border)',
                   }}
                 />

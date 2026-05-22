@@ -1,5 +1,5 @@
 # LiftLog — Product Requirements Document
-**Version:** 2.1  
+**Version:** 2.2  
 **Status:** Draft  
 **Date:** May 2026  
 **Author:** Product Team  
@@ -305,6 +305,42 @@ Priority scale: **P0** = Must Have | **P1** = Should Have | **P2** = Nice to Hav
 
 ---
 
+## 6.5 Design System
+
+LiftLog v2.2 adopts a modern dark-mode aesthetic inspired by high-end fitness apps, with a distinct identity built on restraint, bold typography, and a single electric accent color.
+
+### Color Palette
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `--bg` | `#0C0E0F` | App background — near-black |
+| `--surface` | `#161B1D` | Cards, nav bar, modal sheets |
+| `--card` | `#1E2528` | Elevated content cards |
+| `--border` | `#2A3035` | Dividers, input borders |
+| `--accent` | `#A8FF3E` | Electric lime — primary CTAs, active states, stats |
+| `--text` | `#FFFFFF` | Primary text |
+| `--text-muted` | `#7B8B94` | Labels, subtitles, disabled states |
+| `--danger` | `#FF4D4D` | Destructive actions, error alerts |
+| `--success` | `#4ADE80` | Completion states, positive trends |
+| `--info` | `#38BDF8` | Informational alerts |
+
+### Typography
+
+- **Font family:** Inter (Google Fonts), fallback `-apple-system, BlinkMacSystemFont, sans-serif`
+- **Weights used:** 400 (body), 500 (medium), 600 (labels), 700 (card titles), 800 (page headers), 900 (stat numbers, logo)
+- **Section labels:** 0.7 rem, weight 800, `text-transform: uppercase`, `letter-spacing: 0.1em`, `color: --text-muted`
+- **Stat values:** 2 rem, weight 900, `color: --accent`, `letter-spacing: -1px`
+
+### Component Conventions
+
+- **Primary button:** full-width, `background: --accent`, `color: #0C0E0F` (dark text on lime), `font-weight: 700`, `border-radius: 10px`, min-height 50px
+- **Cards:** `background: --card`, `border: 1px solid --border`, `border-radius: 16px`, padding 18px
+- **Active plan banner:** `border: 1.5px solid --accent` to distinguish from regular cards
+- **Bottom nav:** SVG icons (no emoji), active item uses `color: --text` with a 4px lime dot indicator below, inactive items use `color: --text-muted`
+- **Charts:** accent color `#A8FF3E` for data lines/bars, muted grid lines
+
+---
+
 ## 7. Non-Functional Requirements
 
 ### 7.1 Performance
@@ -387,3 +423,4 @@ Priority scale: **P0** = Must Have | **P1** = Should Have | **P2** = Nice to Hav
 | 1.0 | May 2026 | Initial draft — Google Sheets as data store |
 | 2.0 | May 2026 | Revised — all storage moved to local IndexedDB; removed all Google Cloud dependencies; added JSON backup/restore and CSV export |
 | 2.1 | May 2026 | Added progressive overload (10% weight increase per session), split plan persistence and continuity, plan progress view on Progress page, iPhone 17 Pro/Max display optimization, and updated color palette |
+| 2.2 | May 2026 | Full visual redesign: dark near-black palette (#0C0E0F), electric lime accent (#A8FF3E), Inter font (weight 400–900), SVG nav icons with active dot indicator, 900-weight stat numbers, updated chart colors, revised CSP to allow Google Fonts |

@@ -78,7 +78,7 @@ export default function Dashboard() {
       {
         data: weeklyData.map((w) => w.count),
         backgroundColor: weeklyData.map((w) =>
-          w.count > 0 ? 'rgba(172,133,94,0.85)' : 'rgba(109,115,97,0.4)'
+          w.count > 0 ? 'rgba(168,255,62,0.85)' : 'rgba(42,48,53,0.8)'
         ),
         borderRadius: 6,
       },
@@ -93,8 +93,8 @@ export default function Dashboard() {
       tooltip: { callbacks: { label: (c) => `${c.raw} session${c.raw !== 1 ? 's' : ''}` } },
     },
     scales: {
-      x: { ticks: { color: '#C0C7AB', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
-      y: { ticks: { color: '#C0C7AB', stepSize: 1 }, grid: { color: 'rgba(152,159,126,0.2)' }, beginAtZero: true },
+      x: { ticks: { color: '#7B8B94', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+      y: { ticks: { color: '#7B8B94', stepSize: 1 }, grid: { color: 'rgba(42,48,53,0.8)' }, beginAtZero: true },
     },
   };
 
@@ -123,14 +123,14 @@ export default function Dashboard() {
       {activePlan && nextDay && (
         <div
           style={{
-            background: 'linear-gradient(135deg, var(--surface), var(--card))',
+            background: 'var(--card)',
             border: '1.5px solid var(--accent)',
             borderRadius: 'var(--radius)',
-            padding: '16px',
+            padding: '18px',
             marginBottom: '16px',
           }}
         >
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent-light)', marginBottom: 4 }}>
+          <div style={{ fontSize: '0.68rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent)', marginBottom: 6 }}>
             Active Plan · {activePlan.splitName}
           </div>
           <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 2 }}>{nextDay.dayLabel}</div>

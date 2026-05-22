@@ -115,13 +115,13 @@ export function validateUsername(username) {
 // ── Password strength ─────────────────────────────────────────────────────────
 // Returns { score: 0-3, label, color }
 export function passwordStrength(password) {
-  if (!password || password.length < 8) return { score: 0, label: 'Too short', color: '#b85c4a' };
+  if (!password || password.length < 8) return { score: 0, label: 'Too short', color: '#FF4D4D' };
   const hasNum  = /\d/.test(password);
   const hasSym  = /[^a-zA-Z0-9]/.test(password);
   const isLong  = password.length >= 12;
-  if (isLong && hasNum && hasSym) return { score: 3, label: 'Strong',  color: '#7a9e6b' };
-  if ((hasNum || hasSym) && password.length >= 8) return { score: 2, label: 'Fair', color: '#B6AD90' };
-  return { score: 1, label: 'Weak', color: '#b85c4a' };
+  if (isLong && hasNum && hasSym) return { score: 3, label: 'Strong',  color: '#A8FF3E' };
+  if ((hasNum || hasSym) && password.length >= 8) return { score: 2, label: 'Fair', color: '#F59E0B' };
+  return { score: 1, label: 'Weak', color: '#FF4D4D' };
 }
 
 // ── Login ─────────────────────────────────────────────────────────────────────

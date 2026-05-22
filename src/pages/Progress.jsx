@@ -87,11 +87,11 @@ export default function Progress() {
       {
         label: 'Max Weight (lbs)',
         data: chartValues,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245,158,11,0.1)',
+        borderColor: '#A8FF3E',
+        backgroundColor: 'rgba(168,255,62,0.08)',
         fill: true,
         tension: 0.3,
-        pointBackgroundColor: '#f59e0b',
+        pointBackgroundColor: '#A8FF3E',
         pointRadius: 5,
       },
     ],
@@ -105,8 +105,8 @@ export default function Progress() {
       tooltip: { callbacks: { label: (c) => `${c.raw} lbs` } },
     },
     scales: {
-      x: { ticks: { color: '#94a3b8', maxRotation: 45, font: { size: 10 } }, grid: { display: false } },
-      y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(51,65,85,0.5)' } },
+      x: { ticks: { color: '#7B8B94', maxRotation: 45, font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { color: '#7B8B94' }, grid: { color: 'rgba(42,48,53,0.8)' } },
     },
   };
 
@@ -209,7 +209,7 @@ export default function Progress() {
               </div>
               {activePlan.days.map((day) => (
                 <div key={day.dayLabel} className="card" style={{ marginBottom: 10 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 8, color: 'var(--accent-light)' }}>
+                  <div style={{ fontWeight: 800, fontSize: '0.85rem', marginBottom: 8, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     {day.dayLabel}
                   </div>
                   {day.exercises.map((ex) => {
